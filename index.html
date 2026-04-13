@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Explained — Geoffrey Hinton Interactive Portal</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23111110'/%3E%3Ccircle cx='16' cy='16' r='3' fill='none' stroke='%23c8a96e' stroke-width='1.5'/%3E%3Ccircle cx='8' cy='8' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Ccircle cx='24' cy='8' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Ccircle cx='8' cy='24' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Ccircle cx='24' cy='24' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Cline x1='10' y1='10' x2='13.5' y2='13.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3Cline x1='22' y1='10' x2='18.5' y2='13.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3Cline x1='10' y1='22' x2='13.5' y2='18.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3Cline x1='22' y1='22' x2='18.5' y2='18.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:#0e0e0c;color:#d8d4cc;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 24px;overflow-x:hidden}
+.container{max-width:720px;width:100%;text-align:center}
+.label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#5a5648;margin-bottom:32px}
+h1{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(32px,6vw,56px);font-weight:400;line-height:1.1;margin-bottom:12px;color:#d8d4cc}
+.subtitle{font-size:15px;color:#8a8578;margin-bottom:12px;font-weight:300;line-height:1.6}
+.credit{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5648;letter-spacing:1px;margin-bottom:48px}
+.versions{display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto}
+.version-link{display:block;padding:20px 28px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);text-decoration:none;color:#d8d4cc;transition:all 0.3s;text-align:left;position:relative}
+.version-link:hover{border-color:rgba(200,169,110,0.3);background:rgba(200,169,110,0.04)}
+.version-link .v-title{font-family:'DM Serif Display',Georgia,serif;font-size:18px;margin-bottom:4px}
+.version-link .v-desc{font-size:12px;color:#8a8578;font-weight:300}
+.version-link .v-tag{position:absolute;top:20px;right:20px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:#5a5648;text-transform:uppercase}
+.version-link.featured{border-color:rgba(200,169,110,0.2)}
+.version-link.featured .v-tag{color:#c8a96e}
+.divider{width:40px;height:1px;background:rgba(200,169,110,0.15);margin:40px auto}
+.footer{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a3830;letter-spacing:2px;text-transform:uppercase;margin-top:48px}
+.node{position:fixed;border-radius:50%;background:rgba(200,169,110,0.03);pointer-events:none}
+.n1{width:300px;height:300px;top:-80px;right:-80px}
+.n2{width:200px;height:200px;bottom:-40px;left:-60px}
+</style>
+</head>
+<body>
+<div class="node n1"></div>
+<div class="node n2"></div>
+<div class="container">
+  <div class="label">Interactive Education Portal</div>
+  <h1>The Grandfather of AI<br>Explains It</h1>
+  <p class="subtitle">Geoffrey Hinton on how artificial intelligence actually works.<br>15 interactive sections. Neural network visualizations. Step-by-step reasoning.</p>
+  <p class="credit">Based on Geoffrey Hinton's explanations &middot; Nobel Prize in Physics 2024</p>
+
+  <div class="versions">
+    <a href="hinton-ai-portal.html" class="version-link featured">
+      <div class="v-tag">EN</div>
+      <div class="v-title">Editorial Edition</div>
+      <div class="v-desc">DM Serif Display &middot; warm industrial palette &middot; English</div>
+    </a>
+    <a href="hinton-ai-portal-pl.html" class="version-link featured">
+      <div class="v-tag">PL</div>
+      <div class="v-title">Wersja polska</div>
+      <div class="v-desc">Pełne tłumaczenie &middot; edytorska estetyka &middot; po polsku</div>
+    </a>
+    <a href="hinton-ai-portal-hitech.html" class="version-link">
+      <div class="v-tag">EN</div>
+      <div class="v-title">Hi-Tech Edition</div>
+      <div class="v-desc">Neon cyan &middot; purple glows &middot; futuristic HUD aesthetic</div>
+    </a>
+  </div>
+
+  <div class="divider"></div>
+  <div class="footer">FutureShow &middot; 2025</div>
+</div>
+</body>
+</html>
