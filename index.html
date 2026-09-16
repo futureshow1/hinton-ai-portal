@@ -1,64 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Explained — Geoffrey Hinton Interactive Portal</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23111110'/%3E%3Ccircle cx='16' cy='16' r='3' fill='none' stroke='%23c8a96e' stroke-width='1.5'/%3E%3Ccircle cx='8' cy='8' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Ccircle cx='24' cy='8' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Ccircle cx='8' cy='24' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Ccircle cx='24' cy='24' r='1.5' fill='%23c8a96e' opacity='0.5'/%3E%3Cline x1='10' y1='10' x2='13.5' y2='13.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3Cline x1='22' y1='10' x2='18.5' y2='13.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3Cline x1='10' y1='22' x2='13.5' y2='18.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3Cline x1='22' y1='22' x2='18.5' y2='18.5' stroke='%23c8a96e' stroke-width='0.8' opacity='0.4'/%3E%3C/svg%3E">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>AI, Explained — interaktywny portal o Geoffreyu Hintonie</title>
+<meta name="description" content="Geoffrey Hinton, laureat Nobla i pionier sieci neuronowych, tłumaczy, jak naprawdę działa sztuczna inteligencja. 15 interaktywnych rozdziałów, po polsku i po angielsku.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Space Grotesk',system-ui,sans-serif;background:#0e0e0c;color:#d8d4cc;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:40px 24px;overflow-x:hidden}
-.container{max-width:720px;width:100%;text-align:center}
-.label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:4px;text-transform:uppercase;color:#5a5648;margin-bottom:32px}
-h1{font-family:'DM Serif Display',Georgia,serif;font-size:clamp(32px,6vw,56px);font-weight:400;line-height:1.1;margin-bottom:12px;color:#d8d4cc}
-.subtitle{font-size:15px;color:#8a8578;margin-bottom:12px;font-weight:300;line-height:1.6}
-.credit{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5a5648;letter-spacing:1px;margin-bottom:48px}
-.versions{display:flex;flex-direction:column;gap:16px;max-width:480px;margin:0 auto}
-.version-link{display:block;padding:20px 28px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);text-decoration:none;color:#d8d4cc;transition:all 0.3s;text-align:left;position:relative}
-.version-link:hover{border-color:rgba(200,169,110,0.3);background:rgba(200,169,110,0.04)}
-.version-link .v-title{font-family:'DM Serif Display',Georgia,serif;font-size:18px;margin-bottom:4px}
-.version-link .v-desc{font-size:12px;color:#8a8578;font-weight:300}
-.version-link .v-tag{position:absolute;top:20px;right:20px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:#5a5648;text-transform:uppercase}
-.version-link.featured{border-color:rgba(200,169,110,0.2)}
-.version-link.featured .v-tag{color:#c8a96e}
-.divider{width:40px;height:1px;background:rgba(200,169,110,0.15);margin:40px auto}
-.footer{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#3a3830;letter-spacing:2px;text-transform:uppercase;margin-top:48px}
-.node{position:fixed;border-radius:50%;background:rgba(200,169,110,0.03);pointer-events:none}
-.n1{width:300px;height:300px;top:-80px;right:-80px}
-.n2{width:200px;height:200px;bottom:-40px;left:-60px}
+:root{--bg:#05060d;--card:rgba(255,255,255,.035);--line:rgba(0,212,255,.16);--text:#e7ecf5;--dim:#8b93a7;--faint:#565e72;--cyan:#00d4ff;--purple:#7c3aed}
+html,body{height:100%}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:48px 22px;overflow-x:hidden;position:relative}
+body::before{content:"";position:fixed;inset:-20%;background:
+  radial-gradient(40% 35% at 30% 30%,rgba(124,58,237,.22),transparent 70%),
+  radial-gradient(38% 32% at 72% 68%,rgba(0,212,255,.16),transparent 70%);z-index:-2;pointer-events:none}
+body::after{content:"";position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.045) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(circle at 50% 45%,#000 20%,transparent 75%);z-index:-1;pointer-events:none}
+.wrap{max-width:760px;width:100%;text-align:center}
+.tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--cyan);border:1px solid var(--line);border-radius:999px;padding:6px 14px;margin-bottom:28px;background:rgba(0,212,255,.04)}
+h1{font-size:clamp(38px,7vw,68px);font-weight:700;line-height:1.02;letter-spacing:-.02em;margin-bottom:16px;background:linear-gradient(95deg,#fff 10%,#b9a3ff 45%,var(--cyan) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{font-size:clamp(15px,2.2vw,18px);color:var(--dim);line-height:1.6;max-width:560px;margin:0 auto 12px;font-weight:300}
+.meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:.06em;margin-bottom:44px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:620px;margin:0 auto}
+.choice{position:relative;display:block;text-align:left;text-decoration:none;color:var(--text);padding:24px 24px 22px;border:1px solid var(--line);border-radius:14px;background:var(--card);backdrop-filter:blur(8px);transition:transform .25s,border-color .25s,box-shadow .25s,background .25s;overflow:hidden}
+.choice::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(0,212,255,.12));opacity:0;transition:opacity .25s}
+.choice:hover{transform:translateY(-3px);border-color:rgba(0,212,255,.55);box-shadow:0 0 0 1px rgba(0,212,255,.25),0 18px 50px rgba(0,212,255,.12)}
+.choice:hover::before{opacity:1}
+.choice>*{position:relative}
+.code{font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:600;color:var(--cyan);letter-spacing:.04em;margin-bottom:10px;text-shadow:0 0 18px rgba(0,212,255,.45)}
+.name{font-size:17px;font-weight:600;margin-bottom:4px}
+.desc{font-size:13px;color:var(--dim);line-height:1.5}
+.go{position:absolute;right:20px;top:26px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--faint);transition:color .25s,transform .25s}
+.choice:hover .go{color:var(--cyan);transform:translateX(3px)}
+.foot{margin-top:40px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+@media(max-width:560px){.choices{grid-template-columns:1fr}}
 </style>
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"></head>
+</head>
 <body>
-<div class="node n1"></div>
-<div class="node n2"></div>
-<div class="container">
-  <div class="label">Interactive Education Portal</div>
-  <h1>The Grandfather of AI<br>Explains It</h1>
-  <p class="subtitle">Geoffrey Hinton on how artificial intelligence actually works.<br>15 interactive sections. Neural network visualizations. Step-by-step reasoning.</p>
-  <p class="credit">Based on Geoffrey Hinton's explanations &middot; Nobel Prize in Physics 2024</p>
+<main class="wrap">
+  <span class="tag">Interaktywny portal edukacyjny</span>
+  <h1>AI, Explained</h1>
+  <p class="lead">Geoffrey Hinton — laureat Nobla i pionier sieci neuronowych — tłumaczy, jak naprawdę działa sztuczna inteligencja. Od pojedynczego neuronu po ryzyko superinteligencji.</p>
+  <p class="meta">15 rozdziałów · wizualizacje sieci neuronowych · Nagroda Nobla z fizyki 2024</p>
 
-  <div class="versions">
-    <a href="hinton-ai-portal.html" class="version-link featured">
-      <div class="v-tag">EN</div>
-      <div class="v-title">Editorial Edition</div>
-      <div class="v-desc">DM Serif Display &middot; warm industrial palette &middot; English</div>
+  <nav class="choices" aria-label="Wybór języka / Choose language">
+    <a class="choice" href="hinton-ai-portal-hitech-pl.html" lang="pl">
+      <span class="go">→</span>
+      <div class="code">PL</div>
+      <div class="name">Wersja polska</div>
+      <div class="desc">Pełne tłumaczenie wszystkich rozdziałów i interaktywnych diagramów.</div>
     </a>
-    <a href="hinton-ai-portal-pl.html" class="version-link featured">
-      <div class="v-tag">PL</div>
-      <div class="v-title">Wersja polska</div>
-      <div class="v-desc">Pełne tłumaczenie &middot; edytorska estetyka &middot; po polsku</div>
+    <a class="choice" href="hinton-ai-portal-hitech.html" lang="en">
+      <span class="go">→</span>
+      <div class="code">EN</div>
+      <div class="name">English version</div>
+      <div class="desc">The original edition, with every chapter and interactive diagram.</div>
     </a>
-    <a href="hinton-ai-portal-hitech.html" class="version-link">
-      <div class="v-tag">EN</div>
-      <div class="v-title">Hi-Tech Edition</div>
-      <div class="v-desc">Neon cyan &middot; purple glows &middot; futuristic HUD aesthetic</div>
-    </a>
-  </div>
+  </nav>
 
-  <div class="divider"></div>
-  <div class="footer">FutureShow &middot; 2026</div>
-</div>
+  <p class="foot">FutureShow · 2026</p>
+</main>
 <script src="https://futureshow.pl/assets/fs-home.js" defer></script>
 </body>
 </html>
