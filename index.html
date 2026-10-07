@@ -36,6 +36,12 @@ h1{font-size:clamp(38px,7vw,68px);font-weight:700;line-height:1.02;letter-spacin
 .go{position:absolute;right:20px;top:26px;font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--faint);transition:color .25s,transform .25s}
 .choice:hover .go{color:var(--cyan);transform:translateX(3px)}
 .foot{margin-top:40px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase}
+.sub{margin:34px auto 12px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:#ff2bd6;opacity:.85}
+.choices.cyber .choice{border-color:rgba(255,43,214,.3);border-radius:0;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+.choices.cyber .choice::before{background:linear-gradient(135deg,rgba(255,43,214,.2),rgba(0,246,255,.12))}
+.choices.cyber .choice:hover{border-color:rgba(255,43,214,.7);box-shadow:0 0 0 1px rgba(255,43,214,.3),0 18px 50px rgba(255,43,214,.14)}
+.choices.cyber .code{color:#ff2bd6;text-shadow:0 0 18px rgba(255,43,214,.5)}
+.choices.cyber .choice:hover .go{color:#ff2bd6}
 @media(max-width:560px){.choices{grid-template-columns:1fr}}
 </style>
 <script data-goatcounter="https://futureshow.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
@@ -59,6 +65,22 @@ h1{font-size:clamp(38px,7vw,68px);font-weight:700;line-height:1.02;letter-spacin
       <div class="code">EN</div>
       <div class="name">English version</div>
       <div class="desc">The original edition, with every chapter and interactive diagram.</div>
+    </a>
+  </nav>
+
+  <p class="sub">Edycja cyberpunk · Cyberpunk edition</p>
+  <nav class="choices cyber" aria-label="Edycja cyberpunk / Cyberpunk edition">
+    <a class="choice" href="hinton-ai-portal-cyber-pl.html" lang="pl">
+      <span class="go">→</span>
+      <div class="code">PL</div>
+      <div class="name">Wersja cyberpunk</div>
+      <div class="desc">Ten sam portal w neonowej skórze: sekwencja startowa, syntezowany dźwięk, glitch, nawigacja klawiaturą.</div>
+    </a>
+    <a class="choice" href="hinton-ai-portal-cyber.html" lang="en">
+      <span class="go">→</span>
+      <div class="code">EN</div>
+      <div class="name">Cyberpunk edition</div>
+      <div class="desc">Same portal, neon skin: boot sequence, synthesized audio, glitch, keyboard HUD navigation.</div>
     </a>
   </nav>
 
