@@ -2182,7 +2182,10 @@ function finishBoot(){
   boot.classList.add('done'); setTimeout(()=>boot.remove(), 700);
   const hh = document.querySelector('.hero h1'); if (hh) { hh.style.animation = 'chroma 0.5s steps(2,end) 3'; setTimeout(() => { hh.style.animation = ''; }, 1600); }
 }
-(function runBoot(){
+if (new URLSearchParams(location.search).has('direct')) { bootDone = true; boot.remove(); }
+const unlockOnce = () => { Audio.unlock(); document.removeEventListener('pointerdown', unlockOnce); document.removeEventListener('keydown', unlockOnce); };
+document.addEventListener('pointerdown', unlockOnce); document.addEventListener('keydown', unlockOnce);
+(function runBoot(){ if (bootDone) return;
   let i = 0;
   function next(){
     if (i >= bootLines.length) { jackBtn.style.display = 'inline-block'; return; }
