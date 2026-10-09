@@ -1892,187 +1892,305 @@ function fireSignal(nodeIdx) {
 }
 
 // ===== BACKPROPAGATION VISUALIZATION =====
-let bpCtx, bpW, bpH, bpNodes = [], bpEdges = [], bpPlaying = false, bpAnimFrame, bpPhase = 0, bpProgress = 0, bpEpoch = 0;
+// Mała, ale PRAWDZIWA sieć: przebieg w przód na sigmoidzie, wsteczna propagacja błędu
+// (delta), aktualizacja wag dw = lr * delta_celu * aktywacja_zrodla. Gumka nie jest
+// dekoracją — jej napięcie to realny błąd wyjścia, a naprężenie maleje wraz z uczeniem.
+const BP_LAYERS = [4, 5, 5, 3];
+const BP_INPUT  = [0.92, 0.78, 0.21, 0.86];
+const BP_TARGET = [1, 0, 0];
+const BP_LR = 8;
+const BP_TXT = { out:['Ptak','Kot','Pies'],
+  phases:['Gotowy','Przebieg w przód...','Propagacja wsteczna...','Wagi zaktualizowane!'],
+  epoch:'Epoka: ', target:'cel 1,0', tension:'naprężenie', errCurve:'błąd w czasie',
+  play:'Odtwórz', pause:'Pauza', comma:true };
+
+let bpCtx, bpW, bpH, bpNodes = [], bpEdges = [], bpLayers = [], bpPlaying = false,
+    bpAnimFrame, bpPhase = 0, bpProgress = 0, bpEpoch = 0,
+    bpShownAct = 0, bpTwang = 0, bpTime = 0, bpErrHist = [], bpMaxDelta = 1;
+
+const bpSig = x => 1 / (1 + Math.exp(-x));
+const bpNum = v => BP_TXT.comma ? v.replace('.', ',') : v;
+
+function bpBuild() {
+  bpNodes = []; bpEdges = []; bpLayers = [];
+  const gap = bpW / (BP_LAYERS.length + 1);
+  BP_LAYERS.forEach((count, li) => {
+    const x = gap * (li + 1);
+    const vGap = Math.min(50, (bpH - 100) / (count + 1));
+    const startY = (bpH - 60 - vGap * (count - 1)) / 2;
+    const layer = [];
+    for (let ni = 0; ni < count; ni++) {
+      const n = { x, y: startY + ni * vGap, layer: li, r: 12, act: 0, b: 0, delta: 0, in: [], out: [] };
+      bpNodes.push(n); layer.push(n);
+    }
+    bpLayers.push(layer);
+  });
+  for (let li = 0; li < bpLayers.length - 1; li++) {
+    bpLayers[li].forEach(f => bpLayers[li + 1].forEach(t => {
+      const e = { f, t, w: (Math.random() - 0.5) * 1.6, dw: 0, stage: li + 1 };
+      bpEdges.push(e); f.out.push(e); t.in.push(e);
+    }));
+  }
+  bpLayers[1].forEach(n => n.b = (Math.random() - 0.5) * 0.6);
+  bpLayers[2].forEach(n => n.b = (Math.random() - 0.5) * 0.6);
+  bpLayers[3].forEach(n => n.b = -3.4);   // na starcie wszystkie wyjścia są równie słabe
+  bpForward();
+  bpShownAct = bpLayers[3][0].act;
+  bpErrHist = [1 - bpShownAct];
+}
+
+function bpForward() {
+  bpLayers[0].forEach((n, i) => n.act = BP_INPUT[i]);
+  for (let li = 1; li < bpLayers.length; li++)
+    bpLayers[li].forEach(n => {
+      let z = n.b; n.in.forEach(e => z += e.w * e.f.act); n.act = bpSig(z);
+    });
+}
+
+function bpBackward() {
+  const out = bpLayers[bpLayers.length - 1];
+  out.forEach((n, i) => n.delta = (BP_TARGET[i] - n.act) * n.act * (1 - n.act));
+  for (let li = bpLayers.length - 2; li >= 1; li--)
+    bpLayers[li].forEach(n => {
+      let g = 0; n.out.forEach(e => g += e.w * e.t.delta); n.delta = g * n.act * (1 - n.act);
+    });
+  bpMaxDelta = Math.max(1e-4, ...bpNodes.map(n => Math.abs(n.delta)));
+}
+
+function bpApply() {
+  bpEdges.forEach(e => {
+    e.dw = BP_LR * e.t.delta * e.f.act;
+    e.w = Math.max(-3, Math.min(3, e.w + e.dw));
+  });
+  for (let li = 1; li < bpLayers.length; li++)
+    bpLayers[li].forEach(n => n.b = Math.max(-6, Math.min(6, n.b + BP_LR * n.delta)));
+  bpForward();
+  bpEpoch++;
+  bpTwang = 1;                                   // gumka strzela po poluzowaniu
+  bpErrHist.push(Math.max(0, 1 - bpLayers[3][0].act));
+  if (bpErrHist.length > 80) bpErrHist.shift();
+}
 
 function initBackpropViz() {
   const canvas = document.getElementById('bpCanvas');
   if (!canvas) return;
   bpCtx = canvas.getContext('2d');
   const rect = canvas.parentElement.getBoundingClientRect();
-  canvas.width = rect.width * (window.devicePixelRatio || 1);
-  canvas.height = 320 * (window.devicePixelRatio || 1);
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = '320px';
-  bpCtx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr; canvas.height = 320 * dpr;
+  canvas.style.width = rect.width + 'px'; canvas.style.height = '320px';
+  bpCtx.scale(dpr, dpr);
   bpW = rect.width; bpH = 320;
+  bpPhase = 0; bpProgress = 0; bpEpoch = 0; bpTwang = 0;
+  bpBuild();
+  bpDraw();
+}
 
-  const layers = [4, 5, 5, 3];
-  bpNodes = []; bpEdges = [];
-  const gap = bpW / (layers.length + 1);
+/* Kształt gumki: napięta = prosta i cienka, luźna = pofalowana i grubsza,
+   a po każdej aktualizacji wag jeszcze przez chwilę drga. */
+function bpBandPts(x0, y0, x1, y1, slack, twang) {
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const waves = 1 + Math.round(slack * 5);
+  const amp = slack * 6 + twang * 10;
+  const pts = [];
+  for (let i = 0; i <= 44; i++) {
+    const u = i / 44, env = Math.sin(Math.PI * u);
+    const off = Math.sin(u * Math.PI * waves * 2 + bpTime * (0.004 + twang * 0.02)) * amp * env;
+    pts.push([x0 + dx * u + nx * off, y0 + dy * u + ny * off]);
+  }
+  return pts;
+}
 
-  layers.forEach((count, li) => {
-    const x = gap * (li + 1);
-    const vGap = Math.min(50, (bpH - 100) / (count + 1));
-    const startY = (bpH - 60 - vGap * (count - 1)) / 2;
-    for (let ni = 0; ni < count; ni++) {
-      bpNodes.push({ x, y: startY + ni * vGap, layer: li, act: 0.1 + Math.random() * 0.2, r: 12 });
-    }
-  });
+function bpDrawBand() {
+  const bird = bpLayers[3][0];
+  const axisX = Math.min(bird.x + 64, bpW - 52);
+  const top = bird.y - 46, bottom = bird.y + 46;            // 1,0 na górze, 0 na dole
+  const yFor = v => bottom - (bottom - top) * v;
+  const err = Math.max(0, 1 - bpShownAct);
+  const stretch = Math.min(1, err / 0.95);                  // 1 = maksymalnie naciągnięta
+  const slack = 1 - stretch;
 
-  for (let i = 0; i < bpNodes.length; i++) {
-    for (let j = 0; j < bpNodes.length; j++) {
-      if (bpNodes[j].layer === bpNodes[i].layer + 1) {
-        bpEdges.push({ from: i, to: j, w: (Math.random() - 0.5) * 0.8 });
-      }
-    }
+  // oś wartości
+  bpCtx.strokeStyle = 'rgba(255,255,255,.12)'; bpCtx.lineWidth = 1;
+  bpCtx.beginPath(); bpCtx.moveTo(axisX, top); bpCtx.lineTo(axisX, bottom); bpCtx.stroke();
+  bpCtx.fillStyle = 'rgba(255,255,255,.25)'; bpCtx.font = '9px Share Tech Mono'; bpCtx.textAlign = 'left';
+  bpCtx.fillText(bpNum('0.0'), axisX + 6, bottom + 3);
+
+  // kołek celu
+  bpCtx.beginPath(); bpCtx.arc(axisX, top, 4, 0, Math.PI * 2);
+  bpCtx.fillStyle = '#ffe600'; bpCtx.fill();
+  bpCtx.fillStyle = '#ffe600'; bpCtx.fillText(BP_TXT.target, axisX + 6, top + 3);
+
+  // ścięgno: od neuronu „ptak" do znacznika jego aktywności
+  const my = yFor(bpShownAct);
+  bpCtx.beginPath(); bpCtx.moveTo(bird.x + bird.r, bird.y); bpCtx.lineTo(axisX, my);
+  bpCtx.strokeStyle = 'rgba(255,230,0,.25)'; bpCtx.lineWidth = 1; bpCtx.stroke();
+
+  // GUMKA: znacznik aktywności -> kołek celu
+  const pts = bpBandPts(axisX, my, axisX, top, slack, bpTwang);
+  bpCtx.beginPath(); bpCtx.moveTo(pts[0][0], pts[0][1]);
+  pts.forEach(p => bpCtx.lineTo(p[0], p[1]));
+  bpCtx.strokeStyle = `rgba(255,${Math.round(190 + 40 * slack)},${Math.round(60 + 60 * slack)},${0.45 + 0.5 * stretch})`;
+  bpCtx.lineWidth = 1.1 + 2.6 * slack;                      // naciągnięta gumka cienieje
+  bpCtx.shadowColor = '#ffe600'; bpCtx.shadowBlur = 4 + 10 * stretch;
+  bpCtx.stroke(); bpCtx.shadowBlur = 0;
+
+  // znacznik aktywności (to on jedzie w górę w miarę uczenia)
+  bpCtx.beginPath(); bpCtx.arc(axisX, my, 4.5, 0, Math.PI * 2);
+  bpCtx.fillStyle = '#ffe600'; bpCtx.fill();
+
+  // strzałka siły — tym dłuższa, im mocniej gumka ciągnie
+  if (stretch > 0.04) {
+    const ay = my - 6, tip = my - 6 - 10 * stretch;
+    bpCtx.strokeStyle = `rgba(255,230,0,${0.3 + 0.5 * stretch})`; bpCtx.lineWidth = 1.4;
+    bpCtx.beginPath(); bpCtx.moveTo(axisX - 11, ay); bpCtx.lineTo(axisX - 11, tip); bpCtx.stroke();
+    bpCtx.beginPath(); bpCtx.moveTo(axisX - 14, tip + 4); bpCtx.lineTo(axisX - 11, tip);
+    bpCtx.lineTo(axisX - 8, tip + 4); bpCtx.stroke();
   }
 
-  bpDraw();
+  // odczyt naprężenia
+  bpCtx.textAlign = 'left'; bpCtx.font = '10px Share Tech Mono';
+  bpCtx.fillStyle = `rgba(255,230,0,${0.5 + 0.4 * stretch})`;
+  bpCtx.fillText(BP_TXT.tension + ' ' + bpNum(err.toFixed(2)), axisX - 2, bottom + 17);
+}
+
+function bpDrawSpark() {
+  if (bpErrHist.length < 2) return;
+  const x0 = 96, y0 = bpH - 28, w = 76, h = 16;
+  bpCtx.strokeStyle = 'rgba(255,255,255,.12)'; bpCtx.lineWidth = 1;
+  bpCtx.beginPath(); bpCtx.moveTo(x0, y0 + h); bpCtx.lineTo(x0 + w, y0 + h); bpCtx.stroke();
+  bpCtx.beginPath();
+  bpErrHist.forEach((e, i) => {
+    const x = x0 + w * (i / Math.max(1, bpErrHist.length - 1)), y = y0 + h - h * Math.min(1, e);
+    i ? bpCtx.lineTo(x, y) : bpCtx.moveTo(x, y);
+  });
+  bpCtx.strokeStyle = 'rgba(255,106,0,.75)'; bpCtx.lineWidth = 1.5; bpCtx.stroke();
+  bpCtx.fillStyle = 'rgba(255,255,255,.3)'; bpCtx.font = '9px Share Tech Mono'; bpCtx.textAlign = 'left';
+  bpCtx.fillText(BP_TXT.errCurve, x0, y0 - 4);
 }
 
 function bpDraw() {
   if (!bpCtx) return;
   bpCtx.clearRect(0, 0, bpW, bpH);
 
-  // Draw edges with weight coloring
+  // połączenia — grubość i barwa wedle znaku i siły wagi
   bpEdges.forEach(e => {
-    const from = bpNodes[e.from], to = bpNodes[e.to];
-    bpCtx.beginPath(); bpCtx.moveTo(from.x, from.y); bpCtx.lineTo(to.x, to.y);
-    const absW = Math.abs(e.w);
+    const absW = Math.min(1, Math.abs(e.w) / 2);
+    bpCtx.beginPath(); bpCtx.moveTo(e.f.x, e.f.y); bpCtx.lineTo(e.t.x, e.t.y);
     bpCtx.strokeStyle = e.w > 0 ? `rgba(0,246,255,${absW * 0.5 + 0.05})` : `rgba(255,43,214,${absW * 0.5 + 0.05})`;
     bpCtx.lineWidth = absW * 3 + 0.3;
     bpCtx.stroke();
   });
 
-  // Backprop signal
-  if (bpPhase === 2) {
-    const t = bpProgress;
+  // świeżo zmienione wagi błyskają zaraz po aktualizacji
+  if (bpPhase === 3) {
+    const fade = 1 - bpProgress;
+    const maxDw = Math.max(1e-4, ...bpEdges.map(e => Math.abs(e.dw)));
     bpEdges.forEach(e => {
-      const from = bpNodes[e.from], to = bpNodes[e.to];
-      const px = to.x + (from.x - to.x) * t;
-      const py = to.y + (from.y - to.y) * t;
-      if (t >= 0 && t <= 1) {
-        bpCtx.beginPath(); bpCtx.arc(px, py, 3, 0, Math.PI * 2);
-        bpCtx.fillStyle = 'rgba(255,106,0,0.8)';
-        bpCtx.shadowColor = '#ff6a00'; bpCtx.shadowBlur = 8;
-        bpCtx.fill(); bpCtx.shadowBlur = 0;
-      }
+      const m = Math.abs(e.dw) / maxDw; if (m < 0.08) return;
+      bpCtx.beginPath(); bpCtx.moveTo(e.f.x, e.f.y); bpCtx.lineTo(e.t.x, e.t.y);
+      bpCtx.strokeStyle = `rgba(198,255,0,${0.5 * m * fade})`; bpCtx.lineWidth = 1 + 2.5 * m;
+      bpCtx.stroke();
     });
   }
 
-  // Forward signal
-  if (bpPhase === 1) {
-    const t = bpProgress;
+  // fala sygnału — warstwa po warstwie, a nie wszędzie naraz
+  const stages = BP_LAYERS.length - 1;
+  if (bpPhase === 1 || bpPhase === 2) {
+    const back = bpPhase === 2;
     bpEdges.forEach(e => {
-      const from = bpNodes[e.from], to = bpNodes[e.to];
-      const px = from.x + (to.x - from.x) * t;
-      const py = from.y + (to.y - from.y) * t;
-      if (t >= 0 && t <= 1) {
-        bpCtx.beginPath(); bpCtx.arc(px, py, 2.5, 0, Math.PI * 2);
-        bpCtx.fillStyle = 'rgba(0,246,255,0.7)';
-        bpCtx.shadowColor = '#00f6ff'; bpCtx.shadowBlur = 6;
-        bpCtx.fill(); bpCtx.shadowBlur = 0;
-      }
+      const order = back ? stages - e.stage : e.stage - 1;
+      const t = Math.max(0, Math.min(1, bpProgress * stages - order));
+      if (t <= 0 || t >= 1) return;
+      const u = back ? 1 - t : t;
+      const px = e.f.x + (e.t.x - e.f.x) * u, py = e.f.y + (e.t.y - e.f.y) * u;
+      const mag = back ? Math.min(1, Math.abs(e.t.delta) / bpMaxDelta) : Math.min(1, e.f.act);
+      if (back && mag < 0.06) return;
+      bpCtx.beginPath(); bpCtx.arc(px, py, back ? 1.6 + 3.4 * mag : 1.6 + 1.6 * mag, 0, Math.PI * 2);
+      bpCtx.fillStyle = back
+        ? (e.t.delta >= 0 ? `rgba(255,106,0,${0.35 + 0.55 * mag})` : `rgba(255,43,214,${0.35 + 0.55 * mag})`)
+        : `rgba(0,246,255,${0.3 + 0.5 * mag})`;
+      bpCtx.shadowColor = back ? '#ff6a00' : '#00f6ff'; bpCtx.shadowBlur = back ? 8 : 6;
+      bpCtx.fill(); bpCtx.shadowBlur = 0;
     });
   }
 
-  // Draw nodes
+  // neurony
   bpNodes.forEach(n => {
+    const b = n.act;
     bpCtx.beginPath(); bpCtx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-    const brightness = n.act;
-    bpCtx.fillStyle = `rgba(${Math.floor(brightness*100)},${Math.floor(100+brightness*155)},${Math.floor(200+brightness*55)},${0.3 + brightness * 0.5})`;
+    bpCtx.fillStyle = `rgba(${Math.floor(b*100)},${Math.floor(100+b*155)},${Math.floor(200+b*55)},${0.3 + b * 0.5})`;
     bpCtx.fill();
-    bpCtx.strokeStyle = `rgba(0,246,255,${0.3 + brightness * 0.5})`;
-    bpCtx.lineWidth = 1.5;
-    bpCtx.stroke();
-
-    // Activation bar
-    bpCtx.fillStyle = 'rgba(198,255,0,' + (brightness * 0.8) + ')';
-    bpCtx.fillRect(n.x - 8, n.y + n.r + 3, 16 * brightness, 3);
+    bpCtx.strokeStyle = `rgba(0,246,255,${0.3 + b * 0.5})`; bpCtx.lineWidth = 1.5; bpCtx.stroke();
+    if (bpPhase === 2 && n.layer > 0) {                       // obwódka = siła sygnału wstecznego
+      const m = Math.min(1, Math.abs(n.delta) / bpMaxDelta);
+      if (m > 0.08) {
+        bpCtx.beginPath(); bpCtx.arc(n.x, n.y, n.r + 3, 0, Math.PI * 2);
+        bpCtx.strokeStyle = n.delta >= 0 ? `rgba(255,106,0,${0.6 * m})` : `rgba(255,43,214,${0.6 * m})`;
+        bpCtx.lineWidth = 1 + 2 * m; bpCtx.stroke();
+      }
+    }
+    bpCtx.fillStyle = 'rgba(198,255,0,' + (b * 0.8) + ')';
+    bpCtx.fillRect(n.x - 8, n.y + n.r + 3, 16 * b, 3);
   });
 
-  // Labels
-  const outputLabels = ['Ptak', 'Kot', 'Pies'];
-  const outputNodes = bpNodes.filter(n => n.layer === 3);
-  outputNodes.forEach((n, i) => {
-    bpCtx.fillStyle = '#fff';
-    bpCtx.font = '10px Share Tech Mono';
-    bpCtx.textAlign = 'center';
-    bpCtx.fillText(outputLabels[i], n.x, n.y + 4);
+  // etykiety wyjść + ich aktywacje
+  bpLayers[3].forEach((n, i) => {
+    bpCtx.fillStyle = '#fff'; bpCtx.font = '10px Share Tech Mono'; bpCtx.textAlign = 'center';
+    bpCtx.fillText(BP_TXT.out[i], n.x, n.y + 4);
+    bpCtx.fillStyle = 'rgba(255,255,255,.4)'; bpCtx.font = '9px Share Tech Mono';
+    bpCtx.fillText(bpNum(n.act.toFixed(2)), n.x, n.y - n.r - 5);
   });
 
-  // Epoch counter
-  bpCtx.fillStyle = 'rgba(255,255,255,0.3)';
-  bpCtx.font = '11px Share Tech Mono';
-  bpCtx.textAlign = 'left';
-  bpCtx.fillText('Epoka: ' + bpEpoch, 10, bpH - 15);
+  bpDrawBand();
+  bpDrawSpark();
 
-  // Phase label
-  const phaseLabels = ['Gotowy', 'Przebieg w przód...', 'Propagacja wsteczna...', 'Wagi zaktualizowane!'];
+  bpCtx.fillStyle = 'rgba(255,255,255,0.3)'; bpCtx.font = '11px Share Tech Mono'; bpCtx.textAlign = 'left';
+  bpCtx.fillText(BP_TXT.epoch + bpEpoch, 10, bpH - 8);
   bpCtx.fillStyle = bpPhase === 2 ? '#ff6a00' : bpPhase === 1 ? '#00f6ff' : bpPhase === 3 ? '#c6ff00' : 'rgba(255,255,255,0.3)';
   bpCtx.textAlign = 'right';
-  bpCtx.fillText(phaseLabels[bpPhase] || '', bpW - 10, bpH - 15);
-
-  // Elastic band on output
-  if (bpPhase >= 1) {
-    const birdNode = outputNodes[0];
-    const targetX = birdNode.x + 60;
-    bpCtx.beginPath();
-    bpCtx.moveTo(birdNode.x + birdNode.r, birdNode.y);
-    bpCtx.lineTo(targetX, birdNode.y);
-    bpCtx.strokeStyle = 'rgba(255,230,0,0.6)';
-    bpCtx.lineWidth = 2;
-    bpCtx.setLineDash([4, 4]);
-    bpCtx.stroke();
-    bpCtx.setLineDash([]);
-    bpCtx.fillStyle = '#ffe600';
-    bpCtx.font = '10px Share Tech Mono';
-    bpCtx.textAlign = 'left';
-    bpCtx.fillText('Cel: 1.0', targetX + 4, birdNode.y + 4);
-  }
+  bpCtx.fillText(BP_TXT.phases[bpPhase] || '', bpW - 10, bpH - 8);
 
   if (bpPlaying) bpAnimFrame = requestAnimationFrame(bpAnimate);
 }
 
+function bpTick() {
+  bpTime += 16;
+  bpTwang *= 0.93;
+  bpShownAct += (bpLayers[3][0].act - bpShownAct) * 0.12;    // znacznik dojeżdża płynnie
+}
+
 function bpAnimate() {
-  bpProgress += 0.015;
-  if (bpPhase === 1 && bpProgress >= 1) { bpPhase = 2; bpProgress = 0; }
-  else if (bpPhase === 2 && bpProgress >= 1) {
-    bpPhase = 3; bpProgress = 0;
-    // Update weights
-    bpEdges.forEach(e => { e.w += (Math.random() - 0.4) * 0.05; e.w = Math.max(-1, Math.min(1, e.w)); });
-    // Increase bird activation
-    const outputs = bpNodes.filter(n => n.layer === 3);
-    outputs[0].act = Math.min(1, outputs[0].act + 0.08);
-    outputs[1].act = Math.max(0.05, outputs[1].act - 0.03);
-    outputs[2].act = Math.max(0.05, outputs[2].act - 0.03);
-    bpEpoch++;
-    setTimeout(() => { if(bpPlaying) { bpPhase = 1; bpProgress = 0; } }, 500);
-  }
+  bpTick();
+  bpProgress += 0.022;
+  if (bpPhase === 1 && bpProgress >= 1) { bpBackward(); bpPhase = 2; bpProgress = 0; }
+  else if (bpPhase === 2 && bpProgress >= 1) { bpApply(); bpPhase = 3; bpProgress = 0; }
+  else if (bpPhase === 3 && bpProgress >= 1) { bpPhase = 1; bpProgress = 0; }
   bpDraw();
 }
 
 window.bpStep = function() {
   bpPlaying = false;
-  document.getElementById('bpPlayBtn').textContent = 'Odtwórz';
-  if (bpPhase === 0 || bpPhase === 3) { bpPhase = 1; bpProgress = 0; }
-  else if (bpPhase === 1) { bpPhase = 2; bpProgress = 0; }
-  else if (bpPhase === 2) {
-    bpPhase = 3;
-    bpEdges.forEach(e => { e.w += (Math.random() - 0.4) * 0.05; e.w = Math.max(-1, Math.min(1, e.w)); });
-    const outputs = bpNodes.filter(n => n.layer === 3);
-    outputs[0].act = Math.min(1, outputs[0].act + 0.08);
-    outputs[1].act = Math.max(0.05, outputs[1].act - 0.03);
-    outputs[2].act = Math.max(0.05, outputs[2].act - 0.03);
-    bpEpoch++;
-  }
-  bpDraw();
+  const btn = document.getElementById('bpPlayBtn');
+  if (btn) { btn.textContent = BP_TXT.play; btn.classList.remove('active'); }
+  if (bpPhase === 0 || bpPhase === 3) { bpPhase = 1; }
+  else if (bpPhase === 1) { bpBackward(); bpPhase = 2; }
+  else if (bpPhase === 2) { bpApply(); bpPhase = 3; }
+  bpProgress = 0;
+  // krok rysujemy jako krótką animację samej fazy, żeby gumka zdążyła zadrgać
+  let f = 0;
+  (function run() {
+    bpTick(); bpProgress = Math.min(1, f / 60); bpDraw();
+    if (++f <= 60 && !bpPlaying) requestAnimationFrame(run);
+  })();
 };
 
 window.bpTogglePlay = function() {
   bpPlaying = !bpPlaying;
-  document.getElementById('bpPlayBtn').textContent = bpPlaying ? 'Pauza' : 'Odtwórz';
-  document.getElementById('bpPlayBtn').classList.toggle('active', bpPlaying);
+  const btn = document.getElementById('bpPlayBtn');
+  btn.textContent = bpPlaying ? BP_TXT.pause : BP_TXT.play;
+  btn.classList.toggle('active', bpPlaying);
   if (bpPlaying) {
     if (bpPhase === 0 || bpPhase === 3) { bpPhase = 1; bpProgress = 0; }
     bpAnimate();
@@ -2081,11 +2199,10 @@ window.bpTogglePlay = function() {
 
 window.bpReset = function() {
   bpPlaying = false;
-  document.getElementById('bpPlayBtn').textContent = 'Odtwórz';
-  document.getElementById('bpPlayBtn').classList.remove('active');
-  bpPhase = 0; bpProgress = 0; bpEpoch = 0;
-  bpNodes.forEach(n => { n.act = 0.1 + Math.random() * 0.2; });
-  bpEdges.forEach(e => { e.w = (Math.random() - 0.5) * 0.8; });
+  const btn = document.getElementById('bpPlayBtn');
+  btn.textContent = BP_TXT.play; btn.classList.remove('active');
+  bpPhase = 0; bpProgress = 0; bpEpoch = 0; bpTwang = 0;
+  bpBuild();
   bpDraw();
 };
 
